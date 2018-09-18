@@ -27,16 +27,19 @@ while(cam.isOpened()) :
 
     h, w = img.shape[:2]
 
-    img_h = auto.AutoCanny(img)
-    #img_h = Hough.HoughDetect(img)
-    #img_h = cv2.morphologyEx(img_h, cv2.MORPH_CLOSE, kernel, iterations=1)
-    cv2.imshow("canny",img_h)
+    #img_h = auto.AutoCanny(img)
+    img_h = Hough.HoughDetect(img)
+    img_h = cv2.morphologyEx(img_h, cv2.MORPH_CLOSE, kernel, iterations=1)
+
+    npic_0 = np.zeros((h,w), dtype=np.float32)
     npic_1 = np.zeros((h,w), dtype=np.float32)
     npic_2 = np.zeros((h,w), dtype=np.float32)
     npic_3 = np.zeros((h,w), dtype=np.float32)
 
     points = newlib.GooBoundary(img_h)
-
+    for (x,y) in points[0] :
+        cv2.circle(npic_0, (x,y), 1, (255, 255, 255), -1)
+    cv2.imshow("Boundary",npic_0)
     key = cv2.waitKey(10)
 
     len_x, len_y, npic_1 = newlib.MakeLength(img_h,points)
@@ -66,6 +69,13 @@ while(cam.isOpened()) :
                 I1.append((i, j, p))
             npic_1[j, i] = p
 
+    for j in range(len(points[2])):
+        for i in range(len(points[1])):
+            p = np.sqrt(grad2_x[i] * grad2_y[j])
+            if p > 0:
+                I2.append((i, j, p))
+            npic_2[j, i] = p
+
     print("\nlen_x\n")
     print(len_x)
     print("\ngrad_x\n")
@@ -75,13 +85,8 @@ while(cam.isOpened()) :
     print("")
     print(len(I1))
     print(len(I2))
+    print(len(I1)-len(I2))
     if len(I1) > 160 :
-        for j in range(len(points[2])):
-            for i in range(len(points[1])):
-                p = np.sqrt(grad2_x[i] * grad2_y[j])
-                if p > 0:
-                    I2.append((i, j, p))
-                npic_2[j, i] = p
 
         npic_1 = cv2.morphologyEx(npic_1,cv2.MORPH_DILATE,kernel,iterations=1)
         npic_2 = cv2.morphologyEx(npic_2, cv2.MORPH_DILATE, kernel, iterations=1)
